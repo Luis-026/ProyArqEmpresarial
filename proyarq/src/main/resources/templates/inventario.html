@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario - Plaza Vea</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link th:href="@{/style.css}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="inventario-body">
+
+  <aside class="sidebar">
+    <div class="logo"><img th:src="@{/images/PlazaVeaLogo.png}" alt="Plaza Vea" class="logo-img"></div>
+
+    <nav class="nav flex-column">
+        <a th:if="${usuarioRol != null and #strings.equalsIgnoreCase(usuarioRol, 'Administrador')}"
+           th:href="@{/dashboard}" class="nav-link">
+            <i class="fa-solid fa-chart-line"></i>
+            Dashboard
+        </a>
+        <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+           th:href="@{/inventario}" class="nav-link">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            Inventario
+        </a>
+        <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Operario'))}"
+           th:href="@{/pedidos}">
+            <i class="fa-solid fa-cart-shopping"></i>
+            Pedidos
+        </a>
+        <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+           th:href="@{/operarios}">
+            <i class="fa-solid fa-users"></i>
+            Operarios
+        </a>
+        <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+           th:href="@{/reportes}">
+            <i class="fa-solid fa-chart-pie"></i>
+            Reportes
+        </a>
+    </nav>
+
+    <a th:href="@{/logout}" class="btn btn-outline-danger logout">
+      <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div>
+        <h1>Gestión de Inventario</h1>
+        <p id="bienvenida">Control de stock en tiempo real</p>
+      </div>
+
+      <div class="user-card">
+        <i class="fa-solid fa-user"></i>
+        <span th:text="${usuarioNombre}"></span>
+      </div>
+    </header>
+
+    <section class="inventory-actions">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="        Buscar producto...">
+      </div>
+
+      <select id="categoryFilter">
+        <option value="Todos">Todas las categorías</option>
+      </select>
+
+      <select id="statusFilter">
+        <option value="Todos">Todos los estados</option>
+        <option value="Disponible">Disponible</option>
+        <option value="Bajo stock">Bajo stock</option>
+        <option value="Crítico">Crítico</option>
+      </select>
+
+      <button class="btn btn-primary btn-add" onclick="abrirModal()">
+        <i class="fa-solid fa-plus"></i> Agregar producto
+      </button>
+    </section>
+
+    <section class="summary-cards">
+      <div class="summary-card">
+        <i class="fa-solid fa-box"></i>
+        <div>
+          <h3>Total productos</h3>
+          <p id="totalProductos">0</p>
+        </div>
+      </div>
+
+      <div class="summary-card warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+          <h3>Bajo stock</h3>
+          <p id="bajoStock">0</p>
+        </div>
+      </div>
+
+      <div class="summary-card danger">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <div>
+          <h3>Stock crítico</h3>
+          <p id="stockCritico">0</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="inventory-panel">
+      <h2>Lista de productos</h2>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Stock</th>
+              <th>Ubicación</th>
+              <th>RFID</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+
+          <tbody id="inventoryTable">
+            <tr th:each="producto : ${productos}">
+              <td th:text="${producto.nombre}">Nombre</td>
+              <td th:text="${producto.categoria}">Categoría</td>
+              <td th:text="${producto.stock}">0</td>
+              <td th:text="${producto.ubicacion}">Ubicación</td>
+              <td th:text="${producto.rfid}">RFID</td>
+              <td>
+                <span th:text="${producto.estado != null ? producto.estado : (producto.stock <= 10 ? 'Crítico' : producto.stock <= 25 ? 'Bajo stock' : 'Disponible')}"
+                      th:classappend="${producto.estado != null ? (producto.estado == 'Disponible' ? ' badge disponible' : producto.estado == 'Bajo stock' ? ' badge bajo' : ' badge critico') : ''}">
+                  Estado
+                </span>
+              </td>
+              <td>
+                <button class="btn-action" type="button" th:attr="data-id=${producto.id}" onclick="abrirModalParaEditar(this.getAttribute('data-id'))">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="productModal">
+    <div class="modal-content">
+      <button class="btn btn-light close-modal" onclick="cerrarModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h2 id="modalTitle">Agregar producto</h2>
+
+      <input type="hidden" id="productId" value="">
+      <input type="text" id="newName" placeholder="Nombre del producto">
+
+      <input type="text" id="newCategoryInput" placeholder="Nueva categoría">
+
+      <select id="newCategory">
+        <option value="">Seleccionar categoría existente</option>
+      </select>
+
+      <input type="number" id="newStock" placeholder="Stock">
+
+      <input type="text" id="newLocation" placeholder="Ubicación: Pasillo 1 - Estante A">
+
+      <input type="text" id="newRfid" placeholder="Código RFID">
+
+      <button class="btn btn-primary btn-save" id="saveProductBtn" onclick="agregarProducto()">Guardar producto</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/script.js}"></script>
+</body>
+</html>

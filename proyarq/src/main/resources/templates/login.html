@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Plaza Vea</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link th:href="@{/style.css}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <main class="login-container">
+    <section class="login-card">
+      <div class="logo">
+        <img th:src="@{/images/PlazaVeaLogo.png}" alt="Plaza Vea" class="logo-img">
+      </div>
+
+      <h1>Bienvenido</h1>
+      <p>Ingresa para continuar</p>
+
+      <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+      <form th:action="@{/login}" method="post" id="loginForm" aria-label="Formulario de inicio de sesión">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required aria-required="true" />
+
+        <label for="password">Contraseña</label>
+        <div class="password-box">
+          <input type="password" id="password" name="password" placeholder="********" required aria-required="true" />
+          <button type="button" id="togglePassword" aria-label="Mostrar contraseña">
+            <i class="fa-solid fa-eye" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <label for="role">Rol</label>
+        <select id="role" name="role" required aria-required="true">
+          <option value="">Selecciona un rol</option>
+          <option value="Administrador">Administrador</option>
+          <option value="Operario">Operario</option>
+          <option value="Jefe de Tienda">Jefe de Tienda</option>
+        </select>
+
+        <div class="form-group captcha-widget" aria-label="Google reCAPTCHA">
+          <div class="g-recaptcha" th:attr="data-sitekey=${recaptchaSiteKey}"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-login">Ingresar</button>
+
+        <a href="#" class="forgot">¿Olvidaste tu contraseña?</a>
+      </form>
+
+      <div class="secure">
+        <i class="fa-solid fa-shield-halved"></i>
+        Acceso seguro
+      </div>
+    </section>
+  </main>
+
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/script.js}"></script>
+</body>
+</html>

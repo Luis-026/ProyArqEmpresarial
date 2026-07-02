@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operarios - Plaza Vea</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link th:href="@{/style.css}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="dashboard-body">
+
+  <aside class="sidebar">
+    <div class="logo"><img th:src="@{/images/PlazaVeaLogo.png}" alt="Plaza Vea" class="logo-img"></div>
+
+    <nav class="nav flex-column">
+      <a th:if="${usuarioRol != null and #strings.equalsIgnoreCase(usuarioRol, 'Administrador')}"
+         th:href="@{/dashboard}" class="nav-link">
+        <i class="fa-solid fa-chart-line"></i> Dashboard
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+         th:href="@{/inventario}" class="nav-link">
+        <i class="fa-solid fa-boxes-stacked"></i> Inventario
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Operario'))}"
+         th:href="@{/pedidos}" class="nav-link">
+        <i class="fa-solid fa-cart-shopping"></i> Pedidos
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+         th:href="@{/operarios}" class="nav-link active">
+        <i class="fa-solid fa-users"></i> Operarios
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+         th:href="@{/reportes}" class="nav-link">
+        <i class="fa-solid fa-chart-pie"></i> Reportes
+      </a>
+    </nav>
+
+    <a th:href="@{/logout}" class="btn btn-outline-danger logout">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Cerrar sesión
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div>
+        <h1>Operarios</h1>
+        <p>Gestiona al equipo y su desempeño operativo</p>
+      </div>
+
+      <div class="top-actions">
+        <select>
+          <option>Activo</option>
+          <option>Todos</option>
+          <option>Inactivo</option>
+        </select>
+
+        <button class="btn btn-outline-secondary date-btn">
+          <i class="fa-solid fa-filter"></i>
+          Filtrar
+        </button>
+
+        <button class="btn btn-primary new-btn" type="button" onclick="abrirOperarioModal()">
+          <i class="fa-solid fa-user-plus"></i>
+          Nuevo operario
+        </button>
+      </div>
+
+      <div class="user-card">
+        <i class="fa-solid fa-user"></i>
+        <span th:text="${usuarioNombre}"></span>
+      </div>
+    </header>
+
+    <section class="report-grid">
+      <div class="report-card shadow-sm">
+        <div class="report-card-header">
+          <span class="icon blue"><i class="fa-solid fa-users"></i></span>
+          <div>
+            <h5>Operarios activos</h5>
+            <p class="text-secondary small mb-0">Equipo actualmente disponible</p>
+          </div>
+        </div>
+        <div class="report-card-value" th:text="${operariosActivos != null ? operariosActivos : 24}">24</div>
+        <p class="text-success small mt-2 mb-0"><i class="fa-solid fa-arrow-up-right"></i> +5% en productividad</p>
+      </div>
+
+      <div class="report-card shadow-sm">
+        <div class="report-card-header">
+          <span class="icon green"><i class="fa-solid fa-clock"></i></span>
+          <div>
+            <h5>Tiempo medio</h5>
+            <p class="text-secondary small mb-0">Atención por pedido</p>
+          </div>
+        </div>
+        <div class="report-card-value" th:text="${tiempoMedio != null ? tiempoMedio + ' min' : '18 min'}">18 min</div>
+        <p class="text-warning small mt-2 mb-0"><i class="fa-solid fa-hourglass-half"></i> Estable</p>
+      </div>
+
+      <div class="report-card shadow-sm">
+        <div class="report-card-header">
+          <span class="icon yellow"><i class="fa-solid fa-star"></i></span>
+          <div>
+            <h5>Satisfacción</h5>
+            <p class="text-secondary small mb-0">Valoración de clientes</p>
+          </div>
+        </div>
+        <div class="report-card-value" th:text="${satisfaccion != null ? satisfaccion + '%' : '92%'}">92%</div>
+        <p class="text-success small mt-2 mb-0"><i class="fa-solid fa-thumbs-up"></i> Alta satisfacción</p>
+      </div>
+    </section>
+
+    <section class="table-panel">
+      <h2>Detalle de operarios</h2>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Operario</th>
+              <th>Puesto</th>
+              <th>Pedidos</th>
+              <th>Eficiencia</th>
+              <th>Estado</th>
+              <th>Último ingreso</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="operariosTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="modal" id="operarioModal">
+      <div class="modal-content">
+        <button class="btn btn-light close-modal" onclick="cerrarOperarioModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <h2>Agregar operario</h2>
+
+        <input type="text" id="newOperarioName" placeholder="Nombre del operario">
+        <input type="text" id="newOperarioPosition" placeholder="Puesto">
+        <input type="number" id="newOperarioOrders" placeholder="Pedidos asignados">
+        <input type="number" id="newOperarioEfficiency" placeholder="Eficiencia (%)">
+
+        <select id="newOperarioStatus">
+          <option value="">Seleccionar estado</option>
+          <option value="Activo">Activo</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+
+        <input type="text" id="newOperarioLastLogin" placeholder="Último ingreso">
+
+        <button class="btn btn-primary btn-save" onclick="agregarOperario()">Guardar operario</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script th:src="@{/script.js}"></script>
+</body>
+</html>

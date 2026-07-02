@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Plaza Vea</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/style.css}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="dashboard-body">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img th:src="@{/images/PlazaVeaLogo.png}" alt="Plaza Vea" class="logo-img">
+        </div>
+        <nav class="nav flex-column">
+            <a th:if="${usuarioRol != null and #strings.equalsIgnoreCase(usuarioRol, 'Administrador')}"
+               th:href="@{/dashboard}" class="nav-link">
+                <i class="fa-solid fa-chart-line"></i>
+                Dashboard
+            </a>
+            <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+               th:href="@{/inventario}" class="nav-link">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                Inventario
+            </a>
+            <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Operario'))}"
+               th:href="@{/pedidos}" class="nav-link">
+                <i class="fa-solid fa-cart-shopping"></i>
+                Pedidos
+            </a>
+            <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+               th:href="@{/operarios}" class="nav-link">
+                <i class="fa-solid fa-users"></i>
+                Operarios
+            </a>
+            <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+               th:href="@{/reportes}" class="nav-link">
+                <i class="fa-solid fa-chart-pie"></i>
+                Reportes
+            </a>
+        </nav>
+        <a th:href="@{/logout}" class="btn btn-outline-danger logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Cerrar sesión
+        </a>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+
+        <!-- Encabezado -->
+        <header class="topbar">
+            <div>
+                <h1>Dashboard Administrativo</h1>
+                <p th:text="${usuarioRol} != null ? 'Bienvenido ' + ${usuarioRol} + ' ' + ${usuarioNombre} : 'Bienvenido'"></p>
+            </div>
+            <div class="user-card">
+                <i class="fa-solid fa-user"></i>
+                <span th:text="${usuarioNombre}"></span>
+            </div>
+        </header>
+
+        <!-- Tarjetas -->
+        <section class="cards">
+            <div class="card">
+                <i class="fa-solid fa-cart-flatbed"></i>
+                <div>
+                    <h3>Pedidos Activos</h3>
+                    <p th:text="${pedidosActivos}">0</p>
+                </div>
+            </div>
+            <div class="card warning">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    <h3>Stock Crítico</h3>
+                    <p th:text="${stockCritico}">0</p>
+                </div>
+            </div>
+            <div class="card danger">
+                <i class="fa-solid fa-circle-xmark"></i>
+                <div>
+                    <h3>Cancelaciones</h3>
+                    <p th:text="${cancelaciones}">0</p>
+                </div>
+            </div>
+            <div class="card success">
+                <i class="fa-solid fa-check"></i>
+                <div>
+                    <h3>Pedidos Despachados</h3>
+                    <p th:text="${pedidosDespachados}">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráficos -->
+        <section class="dashboard-grid">
+
+            <!-- Ventas -->
+            <div class="panel">
+                <h2>Ventas por Categoría</h2>
+                <div class="bar-group">
+                    <span>Abarrotes</span>
+                    <div class="bar">
+                        <div style="width: 85%;"></div>
+                    </div>
+                </div>
+                <div class="bar-group">
+                    <span>Lácteos</span>
+                    <div class="bar">
+                        <div style="width: 70%;"></div>
+                    </div>
+                </div>
+                <div class="bar-group">
+                    <span>Bebidas</span>
+                    <div class="bar">
+                        <div style="width: 65%;"></div>
+                    </div>
+                </div>
+                <div class="bar-group">
+                    <span>Limpieza</span>
+
+                    <div class="bar">
+                        <div style="width: 55%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado pedidos -->
+            <div class="panel">
+                <h2>Estado de Pedidos</h2>
+                <div class="status-list">
+                    <div>
+                        <span>
+                            <span class="dot yellow"></span>
+                            Pendientes
+                        </span>
+                        <b>42</b>
+                    </div>
+                    <div>
+                        <span>
+                            <span class="dot blue"></span>
+                            En preparación
+                        </span>
+                        <b>51</b>
+                    </div>
+                    <div>
+                        <span>
+                            <span class="dot green"></span>
+                            Despachados
+                        </span>
+                        <b>28</b>
+                    </div>
+                    <div>
+                        <span>
+                            <span class="dot red"></span>
+                            Cancelados
+                        </span>
+                        <b>12</b>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabla -->
+        <section class="panel table-panel">
+            <h2>Pedidos Recientes</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Estado</th>
+                        <th>Operario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="pedido : ${pedidosRecientes}">
+                        <td th:text="${pedido.codigo}">#PV001</td>
+                        <td th:text="${pedido.cliente}">Cliente</td>
+                        <td>
+                            <span class="badge" th:if="${pedido.estado != null and pedido.estado != ''}"
+                                  th:text="${pedido.estado}">Estado</span>
+                            <span class="badge badge-secondary" th:unless="${pedido.estado != null and pedido.estado != ''}">Sin estado</span>
+                        </td>
+                        <td th:text="${pedido.operario != null} ? ${pedido.operario.nombre} : 'Sin asignar'">Sin asignar</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/script.js}"></script>
+</body>
+</html>

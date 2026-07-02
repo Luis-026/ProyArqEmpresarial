@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reportes - Plaza Vea</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link th:href="@{/style.css}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="dashboard-body">
+
+  <aside class="sidebar">
+    <div class="logo"><img th:src="@{/images/PlazaVeaLogo.png}" alt="Plaza Vea" class="logo-img"></div>
+
+    <nav class="nav flex-column">
+      <a th:if="${usuarioRol != null and #strings.equalsIgnoreCase(usuarioRol, 'Administrador')}"
+         th:href="@{/dashboard}" class="nav-link">
+        <i class="fa-solid fa-chart-line"></i> Dashboard
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+         th:href="@{/inventario}" class="nav-link">
+        <i class="fa-solid fa-boxes-stacked"></i> Inventario
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Operario'))}"
+         th:href="@{/pedidos}" class="nav-link">
+        <i class="fa-solid fa-cart-shopping"></i> Pedidos
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+         th:href="@{/operarios}" class="nav-link">
+        <i class="fa-solid fa-users"></i> Operarios
+      </a>
+      <a th:if="${usuarioRol != null and (#strings.equalsIgnoreCase(usuarioRol, 'Administrador') or #strings.equalsIgnoreCase(usuarioRol, 'Jefe de Tienda'))}"
+         th:href="@{/reportes}" class="nav-link active">
+        <i class="fa-solid fa-chart-pie"></i> Reportes
+      </a>
+    </nav>
+
+    <a th:href="@{/logout}" class="btn btn-outline-danger logout">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Cerrar sesión
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div>
+        <h1>Reportes</h1>
+        <p>Analiza el rendimiento de tu operación</p>
+      </div>
+
+      <div class="top-actions">
+        <select>
+          <option>Resumen mensual</option>
+          <option>Últimos 30 días</option>
+          <option>Este trimestre</option>
+          <option>Este año</option>
+        </select>
+
+        <button class="btn btn-outline-secondary date-btn">
+          <i class="fa-regular fa-calendar-days"></i>
+          Calendario
+        </button>
+
+        <button class="btn btn-primary new-btn">
+          <i class="fa-solid fa-download"></i>
+          Exportar
+        </button>
+      </div>
+
+      <div class="user-card">
+        <i class="fa-solid fa-user"></i>
+        <span th:text="${usuarioNombre}"></span>
+      </div>
+    </header>
+
+    <section class="filters">
+      <input type="date" value="2026-05-31">
+      <select>
+        <option>Todas las tiendas</option>
+        <option>Plaza Vea San Borja</option>
+        <option>Plaza Vea Chiclayo</option>
+      </select>
+    </section>
+
+    <section class="tabs">
+      <button class="active">Resumen</button>
+      <button>Ventas</button>
+      <button>Inventario</button>
+      <button>Pedidos</button>
+      <button>Operarios</button>
+    </section>
+
+    <section class="summary-strip">
+      <div class="summary-pill">
+        <span>Stock crítico</span>
+        <strong th:text="${stockCritico}">0</strong>
+      </div>
+      <div class="summary-pill">
+        <span>Pedidos activos</span>
+        <strong th:text="${totalPedidos}">0</strong>
+      </div>
+      <div class="summary-pill">
+        <span>Productos en inventario</span>
+        <strong th:text="${totalProductos}">0</strong>
+      </div>
+      <div class="summary-pill">
+        <span>Cancelaciones</span>
+        <strong th:text="${tasaCancelacionTexto} + '%'">0%</strong>
+      </div>
+    </section>
+
+    <section class="report-grid">
+      <div class="report-card">
+        <h3>Ventas totales</h3>
+        <h2 th:text="${ventasTotalesTexto}">S/ 0</h2>
+        <p class="positive">▲ Basado en el stock actual del inventario</p>
+        <div class="line-chart blue"></div>
+      </div>
+
+      <div class="report-card">
+        <h3>Pedidos por hora</h3>
+        <div class="bar-chart">
+          <span th:each="valor : ${pedidosPorHora}" th:style="'height:' + ${valor} + '%'" th:attr="aria-label=${valor}"></span>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <h3>Rotación de inventario</h3>
+        <h2 th:text="${rotacionInventarioTexto} + ' veces'">0.0 veces</h2>
+        <p class="positive">▲ Relación entre stock total y productos por categoría</p>
+        <div class="line-chart red"></div>
+      </div>
+
+      <div class="report-card">
+        <h3>Tasa de cancelación</h3>
+        <h2 th:text="${tasaCancelacionTexto} + '%'">0.0%</h2>
+        <p class="negative">▼ Basada en los pedidos registrados</p>
+        <div class="line-chart blue"></div>
+      </div>
+    </section>
+
+    <section class="charts-panel">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h5>Ventas</h5>
+          <span class="text-secondary small">Tendencia semanal</span>
+        </div>
+        <canvas id="salesChart" th:attr="data-labels=${#strings.listJoin(salesChartLabels, ',')}, data-values=${#strings.listJoin(salesChartValues, ',')}"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h5>Rotación de inventario</h5>
+          <span class="text-secondary small">Stock por categoría</span>
+        </div>
+        <canvas id="rotationChart" th:attr="data-labels=${#strings.listJoin(rotationChartLabels, ',')}, data-values=${#strings.listJoin(rotationChartValues, ',')}"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h5>Tasa de cancelación</h5>
+          <span class="text-secondary small">Variación por semana</span>
+        </div>
+        <canvas id="cancelationChart" th:attr="data-labels=${#strings.listJoin(cancellationChartLabels, ',')}, data-values=${#strings.listJoin(cancellationChartValues, ',')}"></canvas>
+      </div>
+    </section>
+
+    <section class="table-panel">
+      <h2>Rendimiento de operarios</h2>
+
+      <div class="table-responsive">
+        <table>
+        <thead>
+          <tr>
+            <th>Operario</th>
+            <th>Pedidos</th>
+            <th>Completados</th>
+            <th>Eficiencia</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr th:each="operario : ${operariosResumen}">
+            <td th:text="${operario.nombre}">Operario</td>
+            <td th:text="${operario.pedidosAsignados}">0</td>
+            <td th:text="${operario.completados}">0</td>
+            <td th:text="${operario.eficiencia}">0.0%</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script th:src="@{/script.js}"></script>
+</body>
+</html>
