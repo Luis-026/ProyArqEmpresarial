@@ -44,157 +44,303 @@
   </aside>
 
   <main class="main-content">
-    <header class="topbar">
-      <div>
-        <h1>Reportes</h1>
-        <p>Analiza el rendimiento de tu operación</p>
-      </div>
+    <div id="reportExportContent">
+      <header class="topbar">
+        <div>
+          <h1>Reportes</h1>
+          <p>Analiza el rendimiento real de tu operación</p>
+        </div>
 
-      <div class="top-actions">
+        <div class="top-actions">
+          <select>
+            <option>Resumen mensual</option>
+            <option>Últimos 30 días</option>
+            <option>Este trimestre</option>
+            <option>Este año</option>
+          </select>
+
+          <button class="btn btn-outline-secondary date-btn" type="button">
+            <i class="fa-regular fa-calendar-days"></i>
+            Calendario
+          </button>
+
+          <button id="exportReportBtn" class="btn btn-primary new-btn" type="button">
+            <i class="fa-solid fa-download"></i>
+            Exportar
+          </button>
+        </div>
+
+        <div class="user-card">
+          <i class="fa-solid fa-user"></i>
+          <span th:text="${usuarioNombre}"></span>
+        </div>
+      </header>
+
+      <section class="filters">
+        <input type="date" value="2026-05-31">
         <select>
-          <option>Resumen mensual</option>
-          <option>Últimos 30 días</option>
-          <option>Este trimestre</option>
-          <option>Este año</option>
+          <option>Todas las tiendas</option>
+          <option>Plaza Vea San Borja</option>
+          <option>Plaza Vea Chiclayo</option>
         </select>
+      </section>
 
-        <button class="btn btn-outline-secondary date-btn">
-          <i class="fa-regular fa-calendar-days"></i>
-          Calendario
-        </button>
+      <section class="tabs">
+        <button class="active" type="button">Resumen</button>
+        <button type="button">Ventas</button>
+        <button type="button">Inventario</button>
+        <button type="button">Pedidos</button>
+        <button type="button">Operarios</button>
+      </section>
 
-        <button class="btn btn-primary new-btn">
-          <i class="fa-solid fa-download"></i>
-          Exportar
-        </button>
-      </div>
-
-      <div class="user-card">
-        <i class="fa-solid fa-user"></i>
-        <span th:text="${usuarioNombre}"></span>
-      </div>
-    </header>
-
-    <section class="filters">
-      <input type="date" value="2026-05-31">
-      <select>
-        <option>Todas las tiendas</option>
-        <option>Plaza Vea San Borja</option>
-        <option>Plaza Vea Chiclayo</option>
-      </select>
-    </section>
-
-    <section class="tabs">
-      <button class="active">Resumen</button>
-      <button>Ventas</button>
-      <button>Inventario</button>
-      <button>Pedidos</button>
-      <button>Operarios</button>
-    </section>
-
-    <section class="summary-strip">
-      <div class="summary-pill">
-        <span>Stock crítico</span>
-        <strong th:text="${stockCritico}">0</strong>
-      </div>
-      <div class="summary-pill">
-        <span>Pedidos activos</span>
-        <strong th:text="${totalPedidos}">0</strong>
-      </div>
-      <div class="summary-pill">
-        <span>Productos en inventario</span>
-        <strong th:text="${totalProductos}">0</strong>
-      </div>
-      <div class="summary-pill">
-        <span>Cancelaciones</span>
-        <strong th:text="${tasaCancelacionTexto} + '%'">0%</strong>
-      </div>
-    </section>
-
-    <section class="report-grid">
-      <div class="report-card">
-        <h3>Ventas totales</h3>
-        <h2 th:text="${ventasTotalesTexto}">S/ 0</h2>
-        <p class="positive">▲ Basado en el stock actual del inventario</p>
-        <div class="line-chart blue"></div>
-      </div>
-
-      <div class="report-card">
-        <h3>Pedidos por hora</h3>
-        <div class="bar-chart">
-          <span th:each="valor : ${pedidosPorHora}" th:style="'height:' + ${valor} + '%'" th:attr="aria-label=${valor}"></span>
+      <section class="summary-strip">
+        <div class="summary-pill">
+          <span>Stock crítico</span>
+          <strong th:text="${stockCritico}">0</strong>
         </div>
-      </div>
-
-      <div class="report-card">
-        <h3>Rotación de inventario</h3>
-        <h2 th:text="${rotacionInventarioTexto} + ' veces'">0.0 veces</h2>
-        <p class="positive">▲ Relación entre stock total y productos por categoría</p>
-        <div class="line-chart red"></div>
-      </div>
-
-      <div class="report-card">
-        <h3>Tasa de cancelación</h3>
-        <h2 th:text="${tasaCancelacionTexto} + '%'">0.0%</h2>
-        <p class="negative">▼ Basada en los pedidos registrados</p>
-        <div class="line-chart blue"></div>
-      </div>
-    </section>
-
-    <section class="charts-panel">
-      <div class="chart-card">
-        <div class="chart-card-header">
-          <h5>Ventas</h5>
-          <span class="text-secondary small">Tendencia semanal</span>
+        <div class="summary-pill">
+          <span>Pedidos activos</span>
+          <strong th:text="${totalPedidos}">0</strong>
         </div>
-        <canvas id="salesChart" th:attr="data-labels=${#strings.listJoin(salesChartLabels, ',')}, data-values=${#strings.listJoin(salesChartValues, ',')}"></canvas>
-      </div>
-
-      <div class="chart-card">
-        <div class="chart-card-header">
-          <h5>Rotación de inventario</h5>
-          <span class="text-secondary small">Stock por categoría</span>
+        <div class="summary-pill">
+          <span>Productos en inventario</span>
+          <strong th:text="${totalProductos}">0</strong>
         </div>
-        <canvas id="rotationChart" th:attr="data-labels=${#strings.listJoin(rotationChartLabels, ',')}, data-values=${#strings.listJoin(rotationChartValues, ',')}"></canvas>
-      </div>
-
-      <div class="chart-card">
-        <div class="chart-card-header">
-          <h5>Tasa de cancelación</h5>
-          <span class="text-secondary small">Variación por semana</span>
+        <div class="summary-pill">
+          <span>Cancelaciones</span>
+          <strong th:text="${tasaCancelacionTexto} + '%'">0%</strong>
         </div>
-        <canvas id="cancelationChart" th:attr="data-labels=${#strings.listJoin(cancellationChartLabels, ',')}, data-values=${#strings.listJoin(cancellationChartValues, ',')}"></canvas>
-      </div>
-    </section>
+      </section>
 
-    <section class="table-panel">
-      <h2>Rendimiento de operarios</h2>
+      <section class="report-grid">
+        <div class="report-card">
+          <div class="report-card-header">
+            <div class="icon blue"><i class="fa-solid fa-sack-dollar"></i></div>
+            <div>
+              <h5>Ventas estimadas</h5>
+              <p>Según pedidos registrados</p>
+            </div>
+          </div>
+          <div class="report-card-value" th:text="${ventasTotalesTexto}">S/ 0</div>
+          <p class="positive">▲ <span th:text="${totalPedidos}">0</span> pedidos procesados</p>
+        </div>
 
-      <div class="table-responsive">
-        <table>
-        <thead>
-          <tr>
-            <th>Operario</th>
-            <th>Pedidos</th>
-            <th>Completados</th>
-            <th>Eficiencia</th>
-          </tr>
-        </thead>
+        <div class="report-card">
+          <div class="report-card-header">
+            <div class="icon green"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <div>
+              <h5>Promedio por pedido</h5>
+              <p>Unidades atendidas</p>
+            </div>
+          </div>
+          <div class="report-card-value" th:text="${promedioPorPedidoTexto}">0 uds/pedido</div>
+          <p class="positive">▲ Promedio del volumen capturado</p>
+        </div>
 
-        <tbody>
-          <tr th:each="operario : ${operariosResumen}">
-            <td th:text="${operario.nombre}">Operario</td>
-            <td th:text="${operario.pedidosAsignados}">0</td>
-            <td th:text="${operario.completados}">0</td>
-            <td th:text="${operario.eficiencia}">0.0%</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+        <div class="report-card">
+          <div class="report-card-header">
+            <div class="icon red"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            <div>
+              <h5>Rotación de inventario</h5>
+              <p>Stock por categoría</p>
+            </div>
+          </div>
+          <div class="report-card-value" th:text="${rotacionInventarioTexto} + 'x'">0.0x</div>
+          <p class="positive">▲ Relación entre stock total y categorías</p>
+        </div>
+
+        <div class="report-card">
+          <div class="report-card-header">
+            <div class="icon yellow"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div>
+              <h5>Tasa de cancelación</h5>
+              <p>Según los estados del sistema</p>
+            </div>
+          </div>
+          <div class="report-card-value" th:text="${tasaCancelacionTexto} + '%'">0.0%</div>
+          <p class="negative">▼ Basada en los pedidos registrados</p>
+        </div>
+      </section>
+
+      <section class="charts-panel">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h5>Pedidos por día</h5>
+              <span class="text-secondary small">Últimos 7 días</span>
+            </div>
+          </div>
+          <canvas id="salesChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h5>Stock por categoría</h5>
+              <span class="text-secondary small">Inventario actual</span>
+            </div>
+          </div>
+          <canvas id="rotationChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h5>Cancelaciones por semana</h5>
+              <span class="text-secondary small">Últimas 4 semanas</span>
+            </div>
+          </div>
+          <canvas id="cancelationChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h5>Demanda por franja</h5>
+              <span class="text-secondary small">Horas de mayor actividad</span>
+            </div>
+          </div>
+          <canvas id="hourlyChart"></canvas>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <h2>Rendimiento de operarios</h2>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Operario</th>
+                <th>Pedidos</th>
+                <th>Completados</th>
+                <th>Eficiencia</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr th:each="operario : ${operariosResumen}">
+                <td th:text="${operario.nombre}">Operario</td>
+                <td th:text="${operario.pedidosAsignados}">0</td>
+                <td th:text="${operario.completados}">0</td>
+                <td th:text="${operario.eficiencia}">0.0%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </main>
 
+  <script th:inline="javascript">
+    const reportChartData = {
+      sales: {
+        labels: /*[[${salesChartLabels}]]*/ [],
+        values: /*[[${salesChartValues}]]*/ []
+      },
+      rotation: {
+        labels: /*[[${rotationChartLabels}]]*/ [],
+        values: /*[[${rotationChartValues}]]*/ []
+      },
+      cancellation: {
+        labels: /*[[${cancellationChartLabels}]]*/ [],
+        values: /*[[${cancellationChartValues}]]*/ []
+      },
+      hourly: {
+        labels: /*[[${hourlyChartLabels}]]*/ [],
+        values: /*[[${hourlyChartValues}]]*/ []
+      }
+    };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script th:src="@{/script.js}"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.Chart) {
+        const buildChart = (canvasId, type, labels, values, labelText, color) => {
+          const canvas = document.getElementById(canvasId);
+          if (!canvas) return;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+
+          new Chart(ctx, {
+            type,
+            data: {
+              labels,
+              datasets: [{
+                label: labelText,
+                data: values,
+                borderColor: color,
+                backgroundColor: type === "bar" ? `${color}30` : `${color}20`,
+                fill: type === "line",
+                tension: 0.3,
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true }
+              }
+            }
+          });
+        };
+
+        buildChart("salesChart", "line", reportChartData.sales.labels, reportChartData.sales.values, "Pedidos", "#e30613");
+        buildChart("rotationChart", "bar", reportChartData.rotation.labels, reportChartData.rotation.values, "Stock", "#2f80ed");
+        buildChart("cancelationChart", "line", reportChartData.cancellation.labels, reportChartData.cancellation.values, "Cancelaciones", "#f2b705");
+        buildChart("hourlyChart", "bar", reportChartData.hourly.labels, reportChartData.hourly.values, "Pedidos", "#27ae60");
+      }
+    });
+
+    const exportButton = document.getElementById("exportReportBtn");
+    if (exportButton) {
+      exportButton.addEventListener("click", async () => {
+        const section = document.getElementById("reportExportContent");
+        if (!section) return;
+
+        exportButton.disabled = true;
+        exportButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
+
+        try {
+          if (window.jspdf && window.html2canvas) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF("p", "pt", "a4");
+            const canvas = await window.html2canvas(section, { scale: 2, backgroundColor: "#ffffff" });
+            const imgData = canvas.toDataURL("image/png");
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth() - 40;
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            let heightLeft = pdfHeight;
+            let position = 20;
+            pdf.addImage(imgData, "PNG", 20, position, pdfWidth, pdfHeight);
+            heightLeft -= pdf.internal.pageSize.getHeight() - 40;
+
+            while (heightLeft > 0) {
+              position = heightLeft - pdfHeight + 20;
+              pdf.addPage();
+              pdf.addImage(imgData, "PNG", 20, position, pdfWidth, pdfHeight);
+              heightLeft -= pdf.internal.pageSize.getHeight() - 40;
+            }
+
+            pdf.save("reporte-plaza-vea.pdf");
+          } else {
+            window.print();
+          }
+        } catch (error) {
+          console.error("No se pudo generar el PDF", error);
+          window.print();
+        } finally {
+          exportButton.disabled = false;
+          exportButton.innerHTML = '<i class="fa-solid fa-download"></i> Exportar';
+        }
+      });
+    }
+  </script>
 </body>
 </html>

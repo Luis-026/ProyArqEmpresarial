@@ -1,6 +1,10 @@
 package plazavea.proyarq.controller;
 
 import jakarta.servlet.http.HttpSession;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -145,20 +149,52 @@ public class DashboardController {
         int totalPedidos = pedidos.size();
         int totalProductosInventario = productos.stream().mapToInt(p -> p.getStock() != null ? p.getStock() : 0).sum();
         int promedioStock = totalProductos == 0 ? 0 : totalProductosInventario / totalProductos;
+        int unidadesVendidas = pedidos.stream().mapToInt(p -> p.getTotalProductos() != null ? p.getTotalProductos() : 0).sum();
+        int promedioPorPedido = totalPedidos == 0 ? 0 : Math.round(unidadesVendidas / (float) totalPedidos);
 
         double tasaCancelacion = totalPedidos == 0 ? 0 : (pedidosCancelados * 100.0) / totalPedidos;
         double rotacionInventario = totalProductos == 0 ? 0 : (totalProductosInventario / (double) Math.max(totalProductos, 1));
 
-        List<String> salesLabels = List.of("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom");
-        List<Integer> salesValues = List.of(
-                Math.max(300, promedioStock * 12),
-                Math.max(320, promedioStock * 13),
-                Math.max(350, promedioStock * 14),
-                Math.max(370, promedioStock * 15),
-                Math.max(410, promedioStock * 16),
-                Math.max(430, promedioStock * 17),
-                Math.max(460, promedioStock * 18)
-        );
+        Map<LocalDate, Integer> pedidosPorDia = new LinkedHashMap<>();
+        for (int i = 6; i >= 0; i--) {
+            LocalDate dia = LocalDate.now().minusDays(i);
+            int valor = pedidos.stream()
+                    .filter(p -> p.getFechaPedido() != null && p.getFechaPedido().toLocalDate().equals(dia))
+                    .mapToInt(p -> p.getTotalProductos() != null ? p.getTotalProductos() : 0)
+                    .sum();
+            pedidosPorDia.put(dia, valor);
+        }
+
+        List<String> salesLabels = new ArrayList<>();
+        List<Integer> salesValues = new ArrayList<>();
+        pedidosPorDia.forEach((dia, valor) -> {
+            salesLabels.add(dia.format(DateTimeFormatter.ofPattern("dd/MM")));
+            salesValues.add(valor);
+        });
+
+        Map<String, Integer> pedidosPorFranja = new LinkedHashMap<>();
+        pedidosPorFranja.put("00-05", 0);
+        pedidosPorFranja.put("06-11", 0);
+        pedidosPorFranja.put("12-17", 0);
+        pedidosPorFranja.put("18-23", 0);
+        pedidos.forEach(pedido -> {
+            if (pedido.getFechaPedido() == null) {
+                return;
+            }
+            int hora = pedido.getFechaPedido().getHour();
+            if (hora < 6) {
+                pedidosPorFranja.merge("00-05", 1, Integer::sum);
+            } else if (hora < 12) {
+                pedidosPorFranja.merge("06-11", 1, Integer::sum);
+            } else if (hora < 18) {
+                pedidosPorFranja.merge("12-17", 1, Integer::sum);
+            } else {
+                pedidosPorFranja.merge("18-23", 1, Integer::sum);
+            }
+        });
+
+        List<String> hourlyChartLabels = new ArrayList<>(pedidosPorFranja.keySet());
+        List<Integer> hourlyChartValues = hourlyChartLabels.stream().map(pedidosPorFranja::get).toList();
 
         Map<String, Integer> stockPorCategoria = new LinkedHashMap<>();
         productos.forEach(producto -> {
@@ -166,24 +202,39 @@ public class DashboardController {
             stockPorCategoria.merge(categoria, producto.getStock() != null ? producto.getStock() : 0, Integer::sum);
         });
 
-        List<String> rotationLabels = new java.util.ArrayList<>(stockPorCategoria.keySet());
+        List<String> rotationLabels = new ArrayList<>(stockPorCategoria.keySet());
         List<Integer> rotationValues = rotationLabels.stream()
                 .map(stockPorCategoria::get)
                 .toList();
 
-        List<String> cancellationLabels = List.of("Sem 1", "Sem 2", "Sem 3", "Sem 4");
-        List<Integer> cancellationValues = List.of(
-                Math.max(0, Math.min(100, (int) Math.round(tasaCancelacion * 0.8))),
-                Math.max(0, Math.min(100, (int) Math.round(tasaCancelacion * 1.1))),
-                Math.max(0, Math.min(100, (int) Math.round(tasaCancelacion * 0.9))),
-                Math.max(0, Math.min(100, (int) Math.round(tasaCancelacion * 1.0)))
-        );
+        List<String> cancellationLabels = new ArrayList<>();
+        List<Integer> cancellationValues = new ArrayList<>();
+        for (int i = 3; i >= 0; i--) {
+            LocalDate inicioSemana = LocalDate.now().minusWeeks(i).with(DayOfWeek.MONDAY);
+            LocalDate finSemana = inicioSemana.plusDays(6);
+            int pedidosSemana = (int) pedidos.stream()
+                    .filter(p -> p.getFechaPedido() != null
+                            && !p.getFechaPedido().toLocalDate().isBefore(inicioSemana)
+                            && !p.getFechaPedido().toLocalDate().isAfter(finSemana))
+                    .count();
+            int canceladosSemana = (int) pedidos.stream()
+                    .filter(p -> p.getFechaPedido() != null
+                            && !p.getFechaPedido().toLocalDate().isBefore(inicioSemana)
+                            && !p.getFechaPedido().toLocalDate().isAfter(finSemana)
+                            && "Cancelado".equalsIgnoreCase(p.getEstado()))
+                    .count();
+            int tasaSemana = pedidosSemana == 0 ? 0 : (int) Math.round((canceladosSemana * 100.0) / pedidosSemana);
+            cancellationLabels.add("Sem " + (4 - i));
+            cancellationValues.add(Math.min(100, Math.max(0, tasaSemana)));
+        }
 
         List<Map<String, Object>> operariosResumen = operarios.stream().map(operario -> {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("nombre", operario.getNombre());
             item.put("pedidosAsignados", operario.getPedidosAsignados() != null ? operario.getPedidosAsignados() : 0);
-            item.put("completados", operario.getPedidos() != null ? operario.getPedidos().size() : 0);
+            item.put("completados", operario.getPedidos() != null
+                    ? operario.getPedidos().stream().filter(p -> "Entregado".equalsIgnoreCase(p.getEstado()) || "Despachado".equalsIgnoreCase(p.getEstado())).count()
+                    : 0);
             item.put("eficiencia", operario.getEficiencia() != null
                     ? String.format(Locale.US, "%.1f%%", operario.getEficiencia())
                     : "0.0%");
@@ -195,9 +246,10 @@ public class DashboardController {
         model.addAttribute("productos", productos);
         model.addAttribute("pedidos", pedidos);
         model.addAttribute("operarios", operarios);
-        model.addAttribute("ventasTotales", totalProductosInventario * 15);
-        model.addAttribute("ventasTotalesTexto", String.format(Locale.US, "S/ %,d", totalProductosInventario * 15));
-        model.addAttribute("pedidosPorHora", List.of(12, 18, 24, 30, 22, 16, 28, 20));
+        model.addAttribute("ventasTotales", unidadesVendidas * 15);
+        model.addAttribute("ventasTotalesTexto", String.format(Locale.US, "S/ %,d", unidadesVendidas * 15));
+        model.addAttribute("promedioPorPedido", promedioPorPedido);
+        model.addAttribute("promedioPorPedidoTexto", promedioPorPedido + " uds/pedido");
         model.addAttribute("rotacionInventario", rotacionInventario);
         model.addAttribute("rotacionInventarioTexto", String.format(Locale.US, "%.1f", rotacionInventario));
         model.addAttribute("tasaCancelacion", tasaCancelacion);
@@ -208,6 +260,8 @@ public class DashboardController {
         model.addAttribute("rotationChartValues", rotationValues);
         model.addAttribute("cancellationChartLabels", cancellationLabels);
         model.addAttribute("cancellationChartValues", cancellationValues);
+        model.addAttribute("hourlyChartLabels", hourlyChartLabels);
+        model.addAttribute("hourlyChartValues", hourlyChartValues);
         model.addAttribute("pedidosPendientes", pedidosPendientes);
         model.addAttribute("pedidosPreparacion", pedidosPreparacion);
         model.addAttribute("pedidosDespachados", pedidosDespachados);
